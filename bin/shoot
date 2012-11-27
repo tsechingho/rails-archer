@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+
+lib = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+
+require 'rails/version'
+require 'rails-archer/version'
+if ['--version', '-v'].include? ARGV.first
+  puts "Rails #{Rails::VERSION::STRING}"
+  puts "Rails-archer #{Rails::Archer::VERSION}"
+  exit 0
+end
+
+
+require 'pathname'
+SCRIPT_RAILS = File.join('script', 'rails')
+
+def in_rails_application?
+  File.exists? SCRIPT_RAILS
+end
+
+def in_rails_application_subdirectory?(path = Pathname.new(Dir.pwd))
+  File.exists?(File.join(path, SCRIPT_RAILS)) ||
+    !path.root? && in_rails_application_subdirectory?(path.parent)
+end
+
+def load_railsrc
+  railsrc = File.join(File.expand_path('~'), '.railsrc')
+  return unless File.exist? railsrc
+  extra_args_string = File.open(railsrc).read
+  extra_args = extra_args_string.split(/\n+/).map { |l| l.split }.flatten
+  puts "Using #{extra_args.join(' ')} from #{railsrc}"
+  ARGV << extra_args
+  ARGV.flatten!
+end
+
+if in_rails_application? || in_rails_application_subdirectory?
+  puts "Can't execute inside Rails project!"
+  exit 0
+elsif ARGV.first != 'new'
+  ARGV[0] = '--help'
+else
+  ARGV.shift
+  load_railsrc
+end
+
+
+require 'rails-archer/generators/app/app_generator'
+Rails::Archer::AppGenerator.start
