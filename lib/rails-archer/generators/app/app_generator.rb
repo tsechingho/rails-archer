@@ -1,5 +1,6 @@
 require 'rails/generators'
 require 'rails/generators/rails/app/app_generator'
+require 'rails-archer/generators/app/app_builder'
 
 module Rails
   module Archer
@@ -41,6 +42,9 @@ module Rails
 
       protected
 
+      def get_builder_class
+        defined?(::AppBuilder) ? ::AppBuilder : ::Rails::Archer::AppBuilder
+      end
     end
   end
 end
